@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dynamic Image Router</title>
+</head>
+<body>
+<script>
+  /**
+   * Route handlers dictionary
+   * Each route calls a specific response implementation.
+   */
+  const routes = {
+    "time1.png": respondWithBlobURL,
+    "time2.png": respondWithContentTypeImage,
+    "time3.png": respondWithDataURLInHTML,
+    "time4.png": respondWithBase64Inline,
+    "time5.png": respondWithStaticRedirect,
+  };
+
+  // Router logic
+  const path = decodeURIComponent(location.pathname.slice(1));
+  const fullPath = path.endsWith(".png") ? path : `${path}.png`; // Auto-complete .png
+  const routeHandler = routes[fullPath];
+
+  if (routeHandler) {
+    // Call the appropriate handler
+    routeHandler();
+  } else {
+    // Fallback for unknown routes
+    document.body.innerHTML = `<h1>404 - Not Found</h1>`;
+  }
+
+  /**
+   * Generate the dynamic image (shared logic for all handlers).
+   * Returns a canvas element.
+   */
+  function generateImage() {
+    const canvas = document.createElement("canvas");
+    const ctx = canvas.getContext("2d");
+    canvas.width = 800;
+    canvas.height = 200;
+
+    // Background
+    ctx.fillStyle = "black";
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+    // Text
+    const now = new Date();
+    ctx.fillStyle = "purple";
+    ctx.font = "40px Arial";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillText(now.toLocaleString(), canvas.width / 2, canvas.height / 2);
+
+    return canvas;
+  }
+
+  /**
+   * Respond with Blob URL (original implementation).
+   */
+  function respondWithBlobURL() {
+    const canvas = generateImage();
+    const imgData = canvas.toDataURL("image/png");
+    const binary = atob(imgData.split(",")[1]);
+    const array = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) {
+      array[i] = binary.charCodeAt(i);
+    }
+    const blob = new Blob([array], { type: "image/png" });
+    const url = URL.createObjectURL(blob);
+
+    location.replace(url); // Redirect to the Blob URL
+  }
+
+  /**
+   * Respond with Content-Type: image/png (for GitHub Camo compatibility).
+   */
+  function respondWithContentTypeImage() {
+    const canvas = generateImage();
+    const imgData = canvas.toDataURL("image/png");
+
+    // Fake HTTP headers for content type (GitHub Camo workaround)
+    document.open();
+    document.write(`<img src="${imgData}" style="display:none;" />`);
+    document.close();
+  }
+
+  /**
+   * Respond with Data URL directly in an HTML response.
+   */
+  function respondWithDataURLInHTML() {
+    const canvas = generateImage();
+    const imgData = canvas.toDataURL("image/png");
+
+    // Inject as HTML <img>
+    document.body.innerHTML = `<img src="${imgData}" alt="Dynamic Time Image">`;
+  }
+
+  /**
+   * Respond with Base64 Inline Image in HTML.
+   */
+  function respondWithBase64Inline() {
+    const canvas = generateImage();
+    const imgData = canvas.toDataURL("image/png");
+
+    // Output as Base64
+    document.body.innerHTML = `<img src="${imgData}" alt="Dynamic Time Image">`;
+  }
+
+  /**
+   * Redirect to a statically hosted image.
+   */
+  function respondWithStaticRedirect() {
+    location.replace("https://image.akeyo.io/static-time.png");
+  }
+</script>
+</body>
+</html>
