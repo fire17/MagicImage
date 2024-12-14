@@ -1,5 +1,5 @@
 # MagicImage
 # [Time](https://image.akeyo.io/time)
-![Time](https://image.akeyo.io/time.png)
+![Time](https://image.akeyo.io/time.pngx)
 
 
